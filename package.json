@@ -1,0 +1,17 @@
+{
+  "name": "story-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Local agent for capturing Instagram stories",
+  "main": "src/runOnce.js",
+  "scripts": {
+    "run:once": "node src/runOnce.js",
+    "run:scheduler": "node src/scheduler.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.3",
+    "playwright": "^1.40.1"
+  }
+}
