@@ -60,10 +60,19 @@ export default function HandlesPage() {
       return
     }
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setError('You must be logged in')
+      setAdding(false)
+      return
+    }
+
     const { error } = await supabase.from('influencers').insert({
       ig_handle: handle,
-      ig_user_id: handle, // Placeholder
-      status: 'pending'
+      ig_user_id: handle,
+      status: 'active',
+      user_id: user.id
     })
 
     if (error) {
