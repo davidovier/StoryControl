@@ -70,8 +70,6 @@ export default function HandlesPage() {
 
     const { error } = await supabase.from('influencers').insert({
       ig_handle: handle,
-      ig_user_id: handle,
-      status: 'active',
       user_id: user.id
     })
 
