@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your magic link</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0a0a0b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: linear-gradient(135deg, #141416 0%, #1a1a1d 100%); border-radius: 16px; border: 1px solid rgba(212, 175, 55, 0.1); overflow: hidden;">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #fafafa;">
+                Story<span style="color: #d4af37;">Check</span>
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: #fafafa;">
+                Your magic link
+              </h2>
+              <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #a1a1aa;">
+                Click the button below to securely sign in to your StoryCheck account. No password needed!
+              </p>
+
+              <!-- Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="padding: 8px 0 32px;">
+                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%); color: #0a0a0b; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);">
+                      Sign In to StoryCheck
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 16px; font-size: 13px; color: #71717a;">
+                Or copy and paste this link into your browser:
+              </p>
+              <p style="margin: 0; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 12px; color: #d4af37; word-break: break-all;">
+                {{ .ConfirmationURL }}
+              </p>
+
+              <div style="margin-top: 24px; padding: 16px; background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 8px;">
+                <p style="margin: 0; font-size: 13px; color: #d4af37;">
+                  This magic link will expire in 1 hour for your security.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
+              <p style="margin: 0; font-size: 12px; color: #52525b; text-align: center;">
+                If you didn't request this magic link, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Sub-footer -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px;">
+          <tr>
+            <td style="padding: 24px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #3f3f46;">
+                StoryCheck - Monitor Instagram Stories Effortlessly
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
