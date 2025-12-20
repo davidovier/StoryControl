@@ -6,7 +6,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
+// Detect Railway environment
+const IS_RAILWAY = !!process.env.RAILWAY_ENVIRONMENT;
+
 export const config = {
+  // Environment
+  IS_RAILWAY,
+  NODE_ENV: process.env.NODE_ENV || 'development',
+
   // Timezone
   TZ: process.env.TZ || 'Europe/Amsterdam',
 
@@ -19,9 +26,13 @@ export const config = {
   // Safety cap for story viewing (10 minutes)
   STORY_MAX_DURATION_MS: 10 * 60 * 1000,
 
-  // Paths
-  CAPTURES_DIR: path.join(ROOT_DIR, 'captures'),
-  SESSION_DIR: path.join(ROOT_DIR, 'sessions'),
+  // Paths - use Railway volume mount if available
+  CAPTURES_DIR: IS_RAILWAY
+    ? '/app/captures'
+    : path.join(ROOT_DIR, 'captures'),
+  SESSION_DIR: process.env.RAILWAY_VOLUME_MOUNT_PATH
+    ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'ig')
+    : path.join(ROOT_DIR, 'sessions', 'ig'),
   HANDLES_FILE: path.join(ROOT_DIR, 'handles.txt'),
 
   // Instagram credentials (from env)
@@ -30,4 +41,14 @@ export const config = {
 
   // Instagram URL
   IG_BASE_URL: 'https://www.instagram.com',
+
+  // Supabase
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY,
+
+  // Storage bucket for screenshots
+  STORAGE_BUCKET: process.env.STORAGE_BUCKET || 'story-captures',
+
+  // Playwright settings for Railway
+  HEADLESS: IS_RAILWAY ? true : (process.env.HEADLESS === 'true'),
 };

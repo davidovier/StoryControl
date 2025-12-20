@@ -1,18 +1,26 @@
 import { chromium } from 'playwright';
 import path from 'path';
 import { config } from './config.js';
-import { createSessionDir, getScreenshotFilename } from './storage.js';
-import { recordCapture } from './supabase.js';
+import { createSessionDir, getScreenshotFilename, getDateString } from './storage.js';
+import { recordCapture, uploadScreenshot } from './supabase.js';
 
 /**
  * Launch a persistent browser context with session storage
  * @returns {Promise<{context: import('playwright').BrowserContext, browser: import('playwright').Browser}>}
  */
 export async function launchContext() {
+  console.log(`Launching browser (headless: ${config.HEADLESS}, session: ${config.SESSION_DIR})`);
+
   const context = await chromium.launchPersistentContext(config.SESSION_DIR, {
-    headless: false,
+    headless: config.HEADLESS,
     viewport: { width: 1280, height: 800 },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    args: config.IS_RAILWAY ? [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+    ] : [],
   });
 
   return { context };
@@ -385,14 +393,18 @@ export async function captureStoriesGroupedByPostedTime(page, dayDir, handle = '
       await page.screenshot({ path: filepath, fullPage: false });
       console.log(`Screenshot: ${filename} (label: ${labelForFilename})`);
 
-      // Record to Supabase if configured
+      // Upload to Supabase Storage
+      const dateStr = getDateString();
+      const storagePath = await uploadScreenshot(filepath, handle, dateStr, filename);
+
+      // Record to Supabase database if configured
       if (influencerId) {
         const storyMediaId = `${handle}_${Date.now()}_${shotIndex}`;
         await recordCapture({
           influencerId,
           storyMediaId,
           mediaType: 'IMAGE',
-          storagePath: filepath,
+          storagePath: storagePath || filepath, // Use storage path if uploaded, else local
           postedAt: new Date().toISOString()
         });
       }

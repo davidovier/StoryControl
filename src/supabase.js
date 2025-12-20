@@ -1,17 +1,100 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 import { config } from './config.js';
 
 // Create Supabase client (only if credentials are configured)
 let supabase = null;
 
-if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
+const supabaseUrl = config.SUPABASE_URL;
+const supabaseKey = config.SUPABASE_SERVICE_KEY;
+
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
   console.log('Supabase client initialized');
 } else {
   console.log('Supabase not configured - captures will only be saved locally');
+}
+
+/**
+ * Ensure the storage bucket exists
+ */
+async function ensureBucket() {
+  if (!supabase) return false;
+
+  const { data: buckets } = await supabase.storage.listBuckets();
+  const bucketExists = buckets?.some(b => b.name === config.STORAGE_BUCKET);
+
+  if (!bucketExists) {
+    const { error } = await supabase.storage.createBucket(config.STORAGE_BUCKET, {
+      public: false,
+      fileSizeLimit: 10485760, // 10MB
+    });
+    if (error && !error.message.includes('already exists')) {
+      console.error('Failed to create storage bucket:', error.message);
+      return false;
+    }
+    console.log(`Created storage bucket: ${config.STORAGE_BUCKET}`);
+  }
+  return true;
+}
+
+/**
+ * Upload a screenshot to Supabase Storage
+ * @param {string} localPath - Local file path
+ * @param {string} handle - Instagram handle
+ * @param {string} dateStr - Date string (YYYY-MM-DD)
+ * @param {string} filename - Screenshot filename
+ * @returns {Promise<string|null>} Storage path or null on failure
+ */
+export async function uploadScreenshot(localPath, handle, dateStr, filename) {
+  if (!supabase) return null;
+
+  try {
+    await ensureBucket();
+
+    const storagePath = `${handle}/${dateStr}/${filename}`;
+    const fileBuffer = fs.readFileSync(localPath);
+
+    const { error } = await supabase.storage
+      .from(config.STORAGE_BUCKET)
+      .upload(storagePath, fileBuffer, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (error) {
+      console.error(`Failed to upload ${filename}:`, error.message);
+      return null;
+    }
+
+    console.log(`Uploaded: ${storagePath}`);
+    return storagePath;
+  } catch (err) {
+    console.error(`Error uploading screenshot:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Get a signed URL for a screenshot
+ * @param {string} storagePath - Path in storage
+ * @param {number} expiresIn - Seconds until expiry (default 1 hour)
+ * @returns {Promise<string|null>} Signed URL or null
+ */
+export async function getSignedUrl(storagePath, expiresIn = 3600) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.storage
+    .from(config.STORAGE_BUCKET)
+    .createSignedUrl(storagePath, expiresIn);
+
+  if (error) {
+    console.error('Failed to get signed URL:', error.message);
+    return null;
+  }
+
+  return data?.signedUrl || null;
 }
 
 /**
