@@ -1,29 +1,81 @@
 import { chromium } from 'playwright';
 import path from 'path';
+import fs from 'fs';
 import { config } from './config.js';
 import { createSessionDir, getScreenshotFilename, getDateString } from './storage.js';
 import { recordCapture, uploadScreenshot } from './supabase.js';
 
+// Store browser reference for cleanup
+let _browser = null;
+
 /**
- * Launch a persistent browser context with session storage
- * @returns {Promise<{context: import('playwright').BrowserContext, browser: import('playwright').Browser}>}
+ * Launch browser context - uses session state file for GitHub Actions,
+ * persistent context for local/Railway
+ * @returns {Promise<{context: import('playwright').BrowserContext, browser: import('playwright').Browser|null}>}
  */
 export async function launchContext() {
-  console.log(`Launching browser (headless: ${config.HEADLESS}, session: ${config.SESSION_DIR})`);
+  const browserArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+  ];
 
-  const context = await chromium.launchPersistentContext(config.SESSION_DIR, {
-    headless: config.HEADLESS,
-    viewport: { width: 1280, height: 800 },
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    args: config.IS_RAILWAY ? [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-    ] : [],
-  });
+  if (config.USE_SESSION_STATE) {
+    // GitHub Actions mode: use session state file
+    console.log(`Launching browser with session state (headless: ${config.HEADLESS})`);
 
-  return { context };
+    _browser = await chromium.launch({
+      headless: config.HEADLESS,
+      args: browserArgs,
+    });
+
+    // Check if session state file exists
+    let storageState = undefined;
+    if (fs.existsSync(config.SESSION_STATE_FILE)) {
+      console.log(`Restoring session from ${config.SESSION_STATE_FILE}`);
+      storageState = config.SESSION_STATE_FILE;
+    }
+
+    const context = await _browser.newContext({
+      viewport: { width: 1280, height: 800 },
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      storageState,
+    });
+
+    return { context, browser: _browser };
+  } else {
+    // Local/Railway mode: use persistent context
+    console.log(`Launching persistent context (headless: ${config.HEADLESS}, session: ${config.SESSION_DIR})`);
+
+    const context = await chromium.launchPersistentContext(config.SESSION_DIR, {
+      headless: config.HEADLESS,
+      viewport: { width: 1280, height: 800 },
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      args: config.IS_RAILWAY ? browserArgs : [],
+    });
+
+    return { context, browser: null };
+  }
+}
+
+/**
+ * Save session state to file (for GitHub Actions)
+ * @param {import('playwright').BrowserContext} context
+ */
+export async function saveSessionState(context) {
+  if (!config.USE_SESSION_STATE) return;
+
+  try {
+    // Ensure directory exists
+    const dir = path.dirname(config.SESSION_STATE_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+
+    await context.storageState({ path: config.SESSION_STATE_FILE });
+    console.log(`Session saved to ${config.SESSION_STATE_FILE}`);
+  } catch (err) {
+    console.error('Failed to save session state:', err.message);
+  }
 }
 
 /**

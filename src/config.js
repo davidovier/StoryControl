@@ -49,6 +49,12 @@ export const config = {
   // Storage bucket for screenshots
   STORAGE_BUCKET: process.env.STORAGE_BUCKET || 'story-captures',
 
-  // Playwright settings for Railway
-  HEADLESS: IS_RAILWAY ? true : (process.env.HEADLESS === 'true'),
+  // Playwright settings
+  HEADLESS: IS_RAILWAY || process.env.HEADLESS === 'true',
+
+  // Use session state file instead of persistent context (for GitHub Actions)
+  USE_SESSION_STATE: process.env.USE_SESSION_STATE === 'true',
+  SESSION_STATE_FILE: process.env.RAILWAY_VOLUME_MOUNT_PATH
+    ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'ig', 'state.json')
+    : path.join(ROOT_DIR, 'sessions', 'ig', 'state.json'),
 };

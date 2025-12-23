@@ -6,6 +6,7 @@ import {
   openProfile,
   tryOpenStoryViewer,
   captureStoriesGroupedByPostedTime,
+  saveSessionState,
 } from './instagram.js';
 import {
   getHandlesFromSupabase,
@@ -36,7 +37,7 @@ export async function runOnce() {
   }
 
   // Launch browser context
-  const { context } = await launchContext();
+  const { context, browser } = await launchContext();
   const page = await context.newPage();
 
   try {
@@ -77,10 +78,17 @@ export async function runOnce() {
         // Continue with next handle
       }
     }
+
+    // Save session state (for GitHub Actions)
+    await saveSessionState(context);
+
   } finally {
     // Close browser
     console.log('\nClosing browser...');
     await context.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 
   console.log('\n' + '='.repeat(50));

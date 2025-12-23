@@ -6,7 +6,8 @@
   "main": "src/runOnce.js",
   "scripts": {
     "run:once": "node src/runOnce.js",
-    "run:scheduler": "node src/scheduler.js"
+    "run:scheduler": "node src/scheduler.js",
+    "export-session": "node src/exportSession.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
